@@ -1,0 +1,31 @@
+{
+  "folders": [
+    { "path": "haywire-repo" },
+    { "path": "haybale-spandrel" },
+    { "path": "haybale-visiongraph" },
+    { "path": "haybale-stream" },
+    { "path": "haybale-protokol" },
+    { "path": "haybale-comfyui" },
+    { "name": "umbrella", "path": "." }
+  ],
+  "settings": {
+    "files.exclude": {
+      "haywire-repo": true,
+      "haybale-*": true
+    }
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Studio (all libraries)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "haywire_studio",
+        "python": "${workspaceFolder:umbrella}/.venv/bin/python",
+        "cwd": "${workspaceFolder:umbrella}",
+        "justMyCode": false
+      }
+    ]
+  }
+}
