@@ -21,6 +21,23 @@ haywire/                    ← this repository (umbrella files only)
 All paths in `pyproject.toml` are relative, so the same files work on every machine with
 this layout.
 
+## Set up on a new machine
+
+```sh
+gh repo clone going-haywire/umbrella haywire
+cd haywire
+gh repo clone going-haywire/haywire haywire-repo
+gh repo clone going-haywire/haybale-spandrel
+gh repo clone going-haywire/haybale-visiongraph
+gh repo clone going-haywire/haybale-stream
+gh repo clone going-haywire/haybale-comfyui
+uv sync
+```
+
+`haybale-protokol` has no repository on GitHub yet. Until it has, a machine without a copy
+of it removes its two lines from `pyproject.toml` (in `dependencies` and
+`[tool.uv.sources]`) before `uv sync`, and does not commit that change.
+
 ## Use
 
 ```sh
