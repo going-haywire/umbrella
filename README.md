@@ -41,9 +41,13 @@ of it removes its two lines from `pyproject.toml` (in `dependencies` and
 ## Use
 
 ```sh
-uv sync                           # build or update the umbrella environment
-uv run haywire                    # run the studio with every library
+uv sync                                   # in this folder: build or update the umbrella environment
+cd haywire-repo && uv run --project .. haywire   # run the studio with every library
 ```
+
+The studio uses the folder it starts in as its project (`.haywire/` settings, graphs,
+port), so start it inside `haywire-repo` (or another project folder) with `--project ..`
+pointing here, never in this folder itself.
 
 In VS Code, open `haywire.code-workspace` (*File → Open Workspace from File…*): every
 repository is a folder of its own, and *Studio (all libraries)* in *Run and Debug*
@@ -54,9 +58,9 @@ interpreter (its `.venv`) for its tests.
 one run; the umbrella itself does not change.
 
 ```sh
-uv run --with-editable <worktree>/packages/haywire-core \
-       --with-editable <worktree>/barn/haybale-core \
-       haywire
+cd <worktree>
+uv run --project <this folder> --with-editable ./packages/haywire-core \
+       --with-editable ./barn/haybale-core haywire
 ```
 
 Overlay each package the worktree changes. Code that lists every installed distribution

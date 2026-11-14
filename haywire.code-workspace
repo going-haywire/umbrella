@@ -23,7 +23,7 @@
         "request": "launch",
         "module": "haywire_studio",
         "python": "${workspaceFolder:umbrella}/.venv/bin/python",
-        "cwd": "${workspaceFolder:umbrella}",
+        "cwd": "${workspaceFolder:haywire-repo}",
         "justMyCode": false
       }
     ]
