@@ -42,6 +42,10 @@ uv sync                                   # in this folder: build or update the 
 cd haywire-repo && uv run --project .. haywire   # run the studio with every library
 ```
 
+Before `uv sync`, pull every repository, `haywire-repo` first: the sources of every
+repository point into it, so a stale checkout fails the sync on a library it does not
+have yet (such as `barn/haybale-audio`).
+
 The studio uses the folder it starts in as its project (`.haywire/` settings, graphs,
 port), so start it inside `haywire-repo` (or another project folder) with `--project ..`
 pointing here, never in this folder itself.
