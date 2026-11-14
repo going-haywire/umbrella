@@ -54,17 +54,45 @@ repository is a folder of its own, and *Studio (all libraries)* in *Run and Debu
 starts the studio from this environment. Give each repository folder its own
 interpreter (its `.venv`) for its tests.
 
-**Run the full studio against a worktree's code**: overlay the worktree's packages for
-one run; the umbrella itself does not change.
+**Run the full studio from any checkout or worktree**: `bin/haywire-studio`, run inside
+it (link it onto your `PATH` once: `ln -s "$PWD/bin/haywire-studio" ~/.local/bin/`).
 
 ```sh
-cd <worktree>
-uv run --project <this folder> --with-editable ./packages/haywire-core \
-       --with-editable ./barn/haybale-core haywire
+cd <checkout or worktree>
+haywire-studio            # arguments go to haywire, e.g. --no-browser
 ```
 
-Overlay each package the worktree changes. Code that lists every installed distribution
-then sees an overlaid package twice; library discovery does not.
+In a main checkout it is `uv run --project <this folder> haywire`. In a worktree, for
+that run only, the worktree's `packages/*` and `barn/*` replace the umbrella's copies,
+and the worktree gets a studio port of its own (the lowest free one above 8124, kept in
+its `.haywire/settings.json`, by `haywire-repo/scripts/worktree_setup.py`), so several
+worktrees run side by side. A worktree outside this folder gets a link beside it for
+each `../<repository>` its sources name, pointing at this folder's copy. Code that lists
+every installed distribution sees a replaced package twice; library discovery does not.
+
+The worktree's sources must name every haywire package it depends on; one missing is
+installed from PyPI for the run instead of this folder's copy.
+
+### Herdr
+
+Herdr's New worktree puts a worktree at `~/.herdr/worktrees/<repo>/<branch>` and opens
+it as a space. With these, the studio starts from any space:
+
+`~/.config/herdr-app/keys.json`, under `"global"` (`cmd-shift-s` opens a `studio` tab):
+
+```json
+"cmd-shift-s": {"command": "tab.new", "args": {"name": "studio", "argv": ["haywire-studio"]}}
+```
+
+`~/.config/herdr-app/programs.json` (*Haywire studio* in the agent menu):
+
+```json
+{ "programs": { "haywire-studio": { "name": "Haywire studio", "run": ["haywire-studio"], "match": ["haywire"] } } }
+```
+
+The command runs on the space's machine, so a remote Linux space needs this umbrella
+there too (as the parent folder of its repositories) and `haywire-studio` on its login
+`PATH`. Its studio listens on 127.0.0.1: `ssh -L <port>:localhost:<port> <machine>`.
 
 ## Adding a repository
 

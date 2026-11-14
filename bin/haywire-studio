@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Run the studio with every library from the umbrella environment, from the repository
+# or worktree you are in. Arguments go to `haywire`.
+#
+# In a worktree, its packages (packages/*, barn/*) replace the umbrella's copies for
+# this run, and the worktree gets a studio port of its own (lowest free above 8124,
+# kept in its .haywire/settings.json). A main checkout runs as the umbrella has it.
+set -euo pipefail
+
+script="${BASH_SOURCE[0]}"
+while [ -L "$script" ]; do
+  target="$(readlink "$script")"
+  case "$target" in
+    /*) script="$target" ;;
+    *) script="$(dirname "$script")/$target" ;;
+  esac
+done
+umbrella="$(cd -P "$(dirname "$script")/.." && pwd)"
+
+if ! root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+  echo "haywire-studio: run it inside a haywire or haybale repository or worktree." >&2
+  exit 1
+fi
+root="$(cd -P "$root" && pwd)"
+main="$(cd -P "$(git -C "$root" rev-parse --path-format=absolute --git-common-dir)/.." && pwd)"
+
+overlay=()
+if [ "$root" != "$main" ]; then
+  # Sources like "../haywire-repo/..." name a sibling repository; a worktree outside the
+  # umbrella gets a link beside it to the umbrella's copy.
+  for sibling in $(grep -ho '"\.\./[^/"]*' "$root"/pyproject.toml "$root"/barn/*/pyproject.toml 2>/dev/null | cut -c5- | sort -u); do
+    link="$(dirname "$root")/$sibling"
+    if [ ! -e "$link" ] && [ -d "$umbrella/$sibling" ]; then
+      ln -s "$umbrella/$sibling" "$link"
+    fi
+  done
+  for pkg in "$root"/packages/*/ "$root"/barn/*/; do
+    [ -f "$pkg/pyproject.toml" ] && overlay+=(--with-editable "${pkg%/}")
+  done
+  python3 -I -c '
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from worktree_setup import assign_studio_port
+print(assign_studio_port(Path(sys.argv[2]), Path(sys.argv[3])))
+' "$umbrella/haywire-repo/scripts" "$root" "$main"
+fi
+
+cd "$root"
+exec uv run --project "$umbrella" ${overlay[@]+"${overlay[@]}"} haywire "$@"
