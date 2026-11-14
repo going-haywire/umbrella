@@ -31,12 +31,9 @@ gh repo clone going-haywire/haybale-spandrel
 gh repo clone going-haywire/haybale-visiongraph
 gh repo clone going-haywire/haybale-stream
 gh repo clone going-haywire/haybale-comfyui
+gh repo clone going-haywire/haybale-protokol
 uv sync
 ```
-
-`haybale-protokol` has no repository on GitHub yet. Until it has, a machine without a copy
-of it removes its two lines from `pyproject.toml` (in `dependencies` and
-`[tool.uv.sources]`) before `uv sync`, and does not commit that change.
 
 ## Use
 
