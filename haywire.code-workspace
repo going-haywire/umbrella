@@ -6,12 +6,14 @@
     { "path": "haybale-stream" },
     { "path": "haybale-protokol" },
     { "path": "haybale-comfyui" },
+    { "path": "marketplace" },
     { "name": "umbrella", "path": "." }
   ],
   "settings": {
     "files.exclude": {
       "haywire-repo": true,
-      "haybale-*": true
+      "haybale-*": true,
+      "marketplace": true
     }
   },
   "launch": {

@@ -15,7 +15,8 @@ haywire/                    ← this repository (umbrella files only)
 ├── haybale-visiongraph/
 ├── haybale-stream/
 ├── haybale-protokol/
-└── haybale-comfyui/
+├── haybale-comfyui/
+└── marketplace/            ← the curated catalogue (no library code)
 ```
 
 All paths in `pyproject.toml` are relative, so the same files work on every machine with
@@ -32,6 +33,7 @@ gh repo clone going-haywire/haybale-visiongraph
 gh repo clone going-haywire/haybale-stream
 gh repo clone going-haywire/haybale-comfyui
 gh repo clone going-haywire/haybale-protokol
+gh repo clone going-haywire/marketplace
 uv sync
 ```
 
