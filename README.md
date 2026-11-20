@@ -34,17 +34,17 @@ gh repo clone going-haywire/haybale-stream
 gh repo clone going-haywire/haybale-comfyui
 gh repo clone going-haywire/haybale-protokol
 gh repo clone going-haywire/marketplace
-uv sync
+bin/umbrella-sync
 ```
 
 ## Use
 
 ```sh
-uv sync                                   # in this folder: build or update the umbrella environment
+bin/umbrella-sync                         # in this folder: list every package, then uv sync
 cd haywire-repo && uv run --project .. haywire   # run the studio with every library
 ```
 
-Before `uv sync`, pull every repository, `haywire-repo` first: the sources of every
+Before syncing, pull every repository, `haywire-repo` first: the sources of every
 repository point into it, so a stale checkout fails the sync on a library it does not
 have yet (such as `barn/haybale-audio`).
 
@@ -99,10 +99,13 @@ there too (as the parent folder of its repositories) and `haywire-studio` on its
 
 ## Adding a repository
 
-Clone it into this folder, then add each of its `barn/*` libraries to `dependencies` and
-`[tool.uv.sources]` in `pyproject.toml` (relative path, `editable = true`), its folder to
-`haywire.code-workspace`, and run `uv sync`. Its own `pyproject.toml` must use relative
-path sources too: uv applies them here.
+Clone it into this folder and run `bin/umbrella-sync`. It lists every package it finds
+(`haywire-repo/packages/*`, and `barn/*` of every repository here) in `dependencies` and
+`[tool.uv.sources]` of `pyproject.toml` (relative path, `editable = true`), adds the
+repository's folder to `haywire.code-workspace`, and runs `uv sync`. Run it again
+whenever a repository gains or loses a library; `bin/umbrella-sync --check` only reports
+drift. The repository's own `pyproject.toml` must use relative path sources too: uv
+applies them here.
 
 ## Agent sessions
 

@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Rebuild the umbrella's package list from the repositories in this folder, then sync.
+
+Every repository cloned beside this file's folder that has `barn/*/pyproject.toml`
+(and, for haywire-repo, `packages/*/pyproject.toml`) contributes its packages:
+`dependencies` and `[tool.uv.sources]` in pyproject.toml are rewritten to list exactly
+those, as relative editable paths, and each repository gets a folder in
+haywire.code-workspace. Then `uv sync` runs.
+
+    bin/umbrella-sync            # rewrite what drifted, then uv sync
+    bin/umbrella-sync --check    # report drift only; exit 1 if any
+    bin/umbrella-sync --no-sync  # rewrite, but skip uv sync
+
+uv cannot do this itself: dependencies and sources take no globs, and every repository
+is its own uv workspace, so the packages cannot be members of an umbrella workspace.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
+
+UMBRELLA = Path(__file__).resolve().parent.parent
+CORE = "haywire-repo"
+PYPROJECT = UMBRELLA / "pyproject.toml"
+WORKSPACE = UMBRELLA / "haywire.code-workspace"
+
+
+def discover() -> list[tuple[str, str]]:
+    """Return (package name, relative path) for every package, core first, then by path."""
+    found: list[tuple[str, str]] = []
+    repos = sorted(
+        (p for p in UMBRELLA.iterdir() if (p / ".git").exists() and (p / "barn").is_dir()),
+        key=lambda p: (p.name != CORE, p.name),
+    )
+    for repo in repos:
+        groups = ["packages", "barn"] if repo.name == CORE else ["barn"]
+        for group in groups:
+            for manifest in sorted((repo / group).glob("*/pyproject.toml")):
+                name = tomllib.loads(manifest.read_text()).get("project", {}).get("name")
+                if name:
+                    found.append((name, manifest.parent.relative_to(UMBRELLA).as_posix()))
+    names = [name for name, _ in found]
+    doubles = sorted({n for n in names if names.count(n) > 1})
+    if doubles:
+        sys.exit(f"umbrella-sync: a package is in two repositories: {', '.join(doubles)}")
+    return found
+
+
+def render_pyproject(text: str, packages: list[tuple[str, str]]) -> str:
+    deps = "dependencies = [\n" + "".join(f'    "{n}",\n' for n, _ in packages) + "]"
+    text, count = re.subn(r"(?ms)^dependencies = \[.*?^\]", lambda _: deps, text, count=1)
+    if count != 1:
+        sys.exit("umbrella-sync: no `dependencies = [...]` block in pyproject.toml")
+    sources = "[tool.uv.sources]\n" + "".join(
+        f'{n} = {{ path = "{p}", editable = true }}\n' for n, p in packages
+    )
+    text, count = re.subn(r"(?ms)^\[tool\.uv\.sources\]\n.*?(?=^\[|\Z)", lambda _: sources, text)
+    if count != 1:
+        sys.exit("umbrella-sync: no [tool.uv.sources] table in pyproject.toml")
+    return text
+
+
+def render_workspace(text: str, packages: list[tuple[str, str]]) -> str:
+    data = json.loads(text)
+    folders = data["folders"]
+    present = {f["path"] for f in folders}
+    repos = dict.fromkeys(p.split("/", 1)[0] for _, p in packages)
+    missing = [r for r in repos if r not in present]
+    if not missing:
+        return text
+    # New repositories go after the last existing repository folder, before the rest.
+    last = max((i for i, f in enumerate(folders) if f["path"] in repos), default=-1)
+    folders[last + 1 : last + 1] = [{"path": r} for r in missing]
+    return json.dumps(data, indent=2) + "\n"
+
+
+def main(argv: list[str]) -> int:
+    check = "--check" in argv
+    packages = discover()
+    drifted = []
+    for path, render in ((PYPROJECT, render_pyproject), (WORKSPACE, render_workspace)):
+        old = path.read_text()
+        new = render(old, packages)
+        if new != old:
+            drifted.append(path.name)
+            if not check:
+                path.write_text(new)
+    if check:
+        print("drifted: " + ", ".join(drifted) if drifted else "in sync")
+        return 1 if drifted else 0
+    print(("rewrote: " + ", ".join(drifted)) if drifted else "already in sync")
+    if "--no-sync" in argv:
+        return 0
+    return subprocess.call(["uv", "sync"], cwd=UMBRELLA)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
