@@ -65,7 +65,9 @@ cd <checkout or worktree>
 haywire-studio            # arguments go to haywire, e.g. --no-browser
 ```
 
-In a main checkout it is `uv run --project <this folder> haywire`. In a worktree, for
+It first runs `bin/umbrella-sync --no-sync --quiet`, so a library a repository gained
+is in the run without a manual sync (a rewrite leaves `pyproject.toml` to commit here).
+In a main checkout it is then `uv run --project <this folder> haywire`. In a worktree, for
 that run only, the worktree's `packages/*` and `barn/*` replace the umbrella's copies,
 and the worktree gets a studio port of its own (the lowest free one above 8124, kept in
 its `.haywire/settings.json`, by `haywire-repo/scripts/worktree_setup.py`), so several
@@ -76,26 +78,10 @@ every installed distribution sees a replaced package twice; library discovery do
 The worktree's sources must name every haywire package it depends on; one missing is
 installed from PyPI for the run instead of this folder's copy.
 
-### Herdr
+### Orchestrators
 
-Herdr's New worktree puts a worktree at `~/.herdr/worktrees/<repo>/<branch>` and opens
-it as a space. With these, the studio starts from any space:
-
-`~/.config/herdr-app/keys.json`, under `"global"` (`cmd-shift-s` opens a `studio` tab):
-
-```json
-"cmd-shift-s": {"command": "tab.new", "args": {"name": "studio", "argv": ["haywire-studio"]}}
-```
-
-`~/.config/herdr-app/programs.json` (*Haywire studio* in the agent menu):
-
-```json
-{ "programs": { "haywire-studio": { "name": "Haywire studio", "run": ["haywire-studio"], "match": ["haywire"] } } }
-```
-
-The command runs on the space's machine, so a remote Linux space needs this umbrella
-there too (as the parent folder of its repositories) and `haywire-studio` on its login
-`PATH`. Its studio listens on 127.0.0.1: `ssh -L <port>:localhost:<port> <machine>`.
+How to start the studio from an orchestrator (herdr, T3 Code, …) is on its page in core:
+[Orchestrators](https://github.com/going-haywire/haywire/blob/master/docs/collaboration/orchestrators/index.md).
 
 ## Adding a repository
 

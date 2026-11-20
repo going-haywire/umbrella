@@ -5,11 +5,14 @@ Every repository cloned beside this file's folder that has `barn/*/pyproject.tom
 (and, for haywire-repo, `packages/*/pyproject.toml`) contributes its packages:
 `dependencies` and `[tool.uv.sources]` in pyproject.toml are rewritten to list exactly
 those, as relative editable paths, and each repository gets a folder in
-haywire.code-workspace. Then `uv sync` runs.
+haywire.code-workspace. Then `uv sync` runs, only when the package list changed or the
+environment does not exist yet. `bin/haywire-studio` runs it (`--no-sync --quiet`) before
+every start, and its `uv run` syncs the environment.
 
-    bin/umbrella-sync            # rewrite what drifted, then uv sync
-    bin/umbrella-sync --check    # report drift only; exit 1 if any
-    bin/umbrella-sync --no-sync  # rewrite, but skip uv sync
+    bin/umbrella-sync                    # rewrite what drifted, sync if needed
+    bin/umbrella-sync --check            # report drift only; exit 1 if any
+    bin/umbrella-sync --no-sync          # rewrite, but never sync
+    bin/umbrella-sync --no-sync --quiet  # as above, silent when in sync
 
 uv cannot do this itself: dependencies and sources take no globs, and every repository
 is its own uv workspace, so the packages cannot be members of an umbrella workspace.
@@ -93,8 +96,15 @@ def main(argv: list[str]) -> int:
     if check:
         print("drifted: " + ", ".join(drifted) if drifted else "in sync")
         return 1 if drifted else 0
-    print(("rewrote: " + ", ".join(drifted)) if drifted else "already in sync")
-    if "--no-sync" in argv:
+    if drifted:
+        print(
+            f"umbrella-sync: rewrote {', '.join(drifted)}; commit it in the umbrella",
+            file=sys.stderr,
+        )
+    elif "--quiet" not in argv:
+        print("umbrella-sync: in sync")
+    # The environment needs syncing only when the package list changed or there is none.
+    if "--no-sync" in argv or ("pyproject.toml" not in drifted and (UMBRELLA / ".venv").is_dir()):
         return 0
     return subprocess.call(["uv", "sync"], cwd=UMBRELLA)
 

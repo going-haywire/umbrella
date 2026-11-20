@@ -23,6 +23,7 @@ dependencies = [
     "haybale-testing",
     "haybale-comfyui",
     "haybale-protokol",
+    "haybale-protokol-midi",
     "haybale-protokol-osc",
     "haybale-spandrel",
     "haybale-stream",
@@ -49,6 +50,7 @@ haybale-studio = { path = "haywire-repo/barn/haybale-studio", editable = true }
 haybale-testing = { path = "haywire-repo/barn/haybale-testing", editable = true }
 haybale-comfyui = { path = "haybale-comfyui/barn/haybale-comfyui", editable = true }
 haybale-protokol = { path = "haybale-protokol/barn/haybale-protokol", editable = true }
+haybale-protokol-midi = { path = "haybale-protokol/barn/haybale-protokol-midi", editable = true }
 haybale-protokol-osc = { path = "haybale-protokol/barn/haybale-protokol-osc", editable = true }
 haybale-spandrel = { path = "haybale-spandrel/barn/haybale-spandrel", editable = true }
 haybale-stream = { path = "haybale-stream/barn/haybale-stream", editable = true }

@@ -46,5 +46,8 @@ print(assign_studio_port(Path(sys.argv[2]), Path(sys.argv[3])))
 ' "$umbrella/haywire-repo/scripts" "$root" "$main"
 fi
 
+# Pick up a library a repository gained or lost; uv run below syncs the environment.
+"$umbrella/bin/umbrella-sync" --no-sync --quiet || echo "haywire-studio: starting with the package list as it is" >&2
+
 cd "$root"
 exec uv run --project "$umbrella" ${overlay[@]+"${overlay[@]}"} haywire "$@"
