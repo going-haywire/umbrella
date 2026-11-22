@@ -6,7 +6,11 @@ Every repository cloned beside this file's folder that has `barn/*/pyproject.tom
 `dependencies` and `[tool.uv.sources]` in pyproject.toml are rewritten to list exactly
 those, as relative editable paths, and each repository gets a folder in
 haywire.code-workspace. Then `uv sync` runs, only when the package list changed or the
-environment does not exist yet. `bin/haywire-studio` runs it (`--no-sync --quiet`) before
+environment does not exist yet.
+
+pyproject.toml, uv.lock and haywire.code-workspace are this machine's own and not
+tracked: each machine clones the repositories it needs, so its package list differs. A
+missing file starts from the template below. `bin/haywire-studio` runs it (`--no-sync --quiet`) before
 every start, and its `uv run` syncs the environment.
 
     bin/umbrella-sync                    # rewrite what drifted, sync if needed
@@ -32,12 +36,51 @@ CORE = "haywire-repo"
 PYPROJECT = UMBRELLA / "pyproject.toml"
 WORKSPACE = UMBRELLA / "haywire.code-workspace"
 
+PYPROJECT_TEMPLATE = """\
+# The umbrella environment: every haywire package from every repo in this folder, as
+# editable installs, for running the full studio. Each repo keeps its own environment
+# for its own tests. Written by bin/umbrella-sync for this machine; not tracked.
+[project]
+name = "haywire-umbrella"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+"""
+
+WORKSPACE_TEMPLATE = {
+    "folders": [{"name": "umbrella", "path": "."}],
+    "settings": {
+        "files.exclude": {"haywire-repo": True, "haybale-*": True, "marketplace": True}
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Studio (all libraries)",
+                "type": "debugpy",
+                "request": "launch",
+                "module": "haywire_studio",
+                "python": "${workspaceFolder:umbrella}/.venv/bin/python",
+                "cwd": "${workspaceFolder:haywire-repo}",
+                "justMyCode": False,
+            }
+        ],
+    },
+}
+
 
 def discover() -> list[tuple[str, str]]:
     """Return (package name, relative path) for every package, core first, then by path."""
     found: list[tuple[str, str]] = []
+    # A worktree beside the repositories has a `.git` file, not a folder: it is no clone.
     repos = sorted(
-        (p for p in UMBRELLA.iterdir() if (p / ".git").exists() and (p / "barn").is_dir()),
+        (p for p in UMBRELLA.iterdir() if (p / ".git").is_dir() and (p / "barn").is_dir()),
         key=lambda p: (p.name != CORE, p.name),
     )
     for repo in repos:
@@ -86,10 +129,14 @@ def main(argv: list[str]) -> int:
     check = "--check" in argv
     packages = discover()
     drifted = []
+    templates = {
+        PYPROJECT: PYPROJECT_TEMPLATE,
+        WORKSPACE: json.dumps(WORKSPACE_TEMPLATE, indent=2) + "\n",
+    }
     for path, render in ((PYPROJECT, render_pyproject), (WORKSPACE, render_workspace)):
-        old = path.read_text()
+        old = path.read_text() if path.exists() else templates[path]
         new = render(old, packages)
-        if new != old:
+        if new != old or not path.exists():
             drifted.append(path.name)
             if not check:
                 path.write_text(new)
@@ -98,7 +145,7 @@ def main(argv: list[str]) -> int:
         return 1 if drifted else 0
     if drifted:
         print(
-            f"umbrella-sync: rewrote {', '.join(drifted)}; commit it in the umbrella",
+            f"umbrella-sync: rewrote {', '.join(drifted)}",
             file=sys.stderr,
         )
     elif "--quiet" not in argv:

@@ -1,10 +1,9 @@
 # This repository tracks only the umbrella files; every folder beside them is its own
-# repository (or unrelated) and stays out.
+# repository (or unrelated) and stays out. pyproject.toml, uv.lock and
+# haywire.code-workspace stay out too: bin/umbrella-sync writes them for each machine
+# from the repositories cloned there.
 /*
 !/.gitignore
 !/.python-version
-!/pyproject.toml
-!/uv.lock
-!/haywire.code-workspace
 !/README.md
 !/bin/

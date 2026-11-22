@@ -19,8 +19,13 @@ haywire/                    ← this repository (umbrella files only)
 └── marketplace/            ← the curated catalogue (no library code)
 ```
 
-All paths in `pyproject.toml` are relative, so the same files work on every machine with
-this layout.
+Clone only the repositories this machine needs; `haywire-repo` is the one every machine
+has.
+
+`pyproject.toml`, `uv.lock` and `haywire.code-workspace` are not tracked. `bin/umbrella-sync`
+writes them for each machine from the repositories cloned there, so two machines with
+different libraries never fight over them. Each machine therefore resolves its own
+third-party versions; the repositories' own tracked locks are what CI tests against.
 
 ## Set up on a new machine
 
@@ -28,6 +33,7 @@ this layout.
 gh repo clone going-haywire/umbrella haywire
 cd haywire
 gh repo clone going-haywire/haywire haywire-repo
+# then any of these this machine needs:
 gh repo clone going-haywire/haybale-spandrel
 gh repo clone going-haywire/haybale-visiongraph
 gh repo clone going-haywire/haybale-stream
@@ -53,7 +59,8 @@ port), so start it inside `haywire-repo` (or another project folder) with `--pro
 pointing here, never in this folder itself.
 
 In VS Code, open `haywire.code-workspace` (*File → Open Workspace from File…*): every
-repository is a folder of its own, and *Studio (all libraries)* in *Run and Debug*
+repository with libraries is a folder of its own (add others such as `marketplace` by
+hand; the file is this machine's), and *Studio (all libraries)* in *Run and Debug*
 starts the studio from this environment. Give each repository folder its own
 interpreter (its `.venv`) for its tests.
 
@@ -66,7 +73,7 @@ haywire-studio            # arguments go to haywire, e.g. --no-browser
 ```
 
 It first runs `bin/umbrella-sync --no-sync --quiet`, so a library a repository gained
-is in the run without a manual sync (a rewrite leaves `pyproject.toml` to commit here).
+is in the run without a manual sync.
 In a main checkout it is then `uv run --project <this folder> haywire`. In a worktree, for
 that run only, the worktree's `packages/*` and `barn/*` replace the umbrella's copies,
 and the worktree gets a studio port of its own (the lowest free one above 8124, kept in
@@ -88,7 +95,8 @@ How to start the studio from an orchestrator (herdr, T3 Code, …) is on its pag
 Clone it into this folder and run `bin/umbrella-sync`. It lists every package it finds
 (`haywire-repo/packages/*`, and `barn/*` of every repository here) in `dependencies` and
 `[tool.uv.sources]` of `pyproject.toml` (relative path, `editable = true`), adds the
-repository's folder to `haywire.code-workspace`, and runs `uv sync`. Run it again
+repository's folder to `haywire.code-workspace`, and runs `uv sync`. A missing file is
+written from the script's template first. Worktrees beside the repositories are skipped. Run it again
 whenever a repository gains or loses a library; `bin/umbrella-sync --check` only reports
 drift. The repository's own `pyproject.toml` must use relative path sources too: uv
 applies them here.
