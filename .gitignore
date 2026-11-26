@@ -7,3 +7,8 @@
 !/.python-version
 !/README.md
 !/bin/
+# The session hooks: .claude/settings.json runs core's hooks (haywire-repo/dev/hooks).
+# Only that file is tracked; settings.local.json and the rest stay each machine's own.
+!/.claude/
+/.claude/*
+!/.claude/settings.json
