@@ -103,6 +103,11 @@ applies them here.
 
 ## Agent sessions
 
-Start agent sessions inside a repository, never in this folder: the rules and hooks live
-in each repository. This folder has no `CLAUDE.md` on purpose, because agents also load
-`CLAUDE.md` files from parent folders.
+The umbrella runs core's session hooks: `.claude/settings.json` points at
+`haywire-repo/dev/hooks/`, so a lead started in this folder gets its role, the T3/herdr
+slot (it is a main folder, so a lead) and the git guards, like one started in a repository.
+The hooks resolve only where `haywire-repo` sits inside the project folder, that is in this
+main folder. A worktree of this repository has no `haywire-repo`, so there each hook fails
+to start (Claude Code reports it and goes on): run umbrella sessions here. Task work still
+runs inside a repository, whose own rules and hooks apply there. This folder has
+no `CLAUDE.md` on purpose, because agents also load `CLAUDE.md` files from parent folders.
