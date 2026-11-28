@@ -15,6 +15,7 @@ haywire/                    ← this repository (umbrella files only)
 ├── haybale-visiongraph/
 ├── haybale-stream/
 ├── haybale-protokol/
+├── haybale-agents/
 ├── haybale-comfyui/
 └── marketplace/            ← the curated catalogue (no library code)
 ```
@@ -39,6 +40,7 @@ gh repo clone going-haywire/haybale-visiongraph
 gh repo clone going-haywire/haybale-stream
 gh repo clone going-haywire/haybale-comfyui
 gh repo clone going-haywire/haybale-protokol
+gh repo clone going-haywire/haybale-agents
 gh repo clone going-haywire/marketplace
 bin/umbrella-sync
 ```
